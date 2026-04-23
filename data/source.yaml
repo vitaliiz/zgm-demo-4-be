@@ -48,19 +48,17 @@ dialog:
   description: Customer and waiter have a conversation in a restaurant.
 
   flowsSelection:
-    -
-      row : 0
+    row_0:
       role: *ROLE_A
-      text: *FLOW_SELECT_ROW_0
-    -
-      row : 1
-      role: *ROLE_B
       text:
-        -
-          flow_id: 0,
-          val: *FLOW_SELECT_ROW_1_0
-        - flow_id: 1,
-          val: *FLOW_SELECT_ROW_1_1
+        *FLOW_SELECT_ROW_0
+    row_1:
+      role: *ROLE_B
+      flowOptions:
+        - flow_id: 0
+          text: *FLOW_SELECT_ROW_1_0
+        - flow_id: 1
+          text: *FLOW_SELECT_ROW_1_1
 
   flows:
     - id: 0

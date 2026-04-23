@@ -18,6 +18,7 @@ kotlin {
 }
 
 dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.18.2")
     implementation("io.ktor:ktor-serialization-gson:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(ktorLibs.server.config.yaml)
@@ -34,4 +35,6 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
+    testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
 }
