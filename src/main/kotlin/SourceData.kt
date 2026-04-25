@@ -1,7 +1,5 @@
 package com.example
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,9 +15,7 @@ data class Variables(
 
 @Serializable
 data class VariableValue(
-    @JsonProperty("variable_id")
-    @SerialName("variable_id")
-    val variable_id: Int,
+    val variableId: Int,
     val text: String
 )
 
@@ -27,27 +23,19 @@ data class VariableValue(
 data class SequenceItem(
     val seq: Int,
     val role: String,
-    @JsonProperty("multiText")
-    @SerialName("multiText")
     val multiText: List<MultiTextItem>
 )
 
 @Serializable
 data class MultiTextItem(
-    @JsonProperty("variable_id")
-    @SerialName("variable_id")
-    val variable_id: Int? = null,
+    val variableId: Int? = null,
     val text: String
 )
 
 @Serializable
 data class FlowsSelection(
-    @JsonProperty("row_0")
-    @SerialName("row_0")
-    val row_0: FlowSelectionRow0,
-    @JsonProperty("row_1")
-    @SerialName("row_1")
-    val row_1: FlowSelectionRow1
+    val row0: FlowSelectionRow0,
+    val row1: FlowSelectionRow1
 )
 
 @Serializable
@@ -59,16 +47,12 @@ data class FlowSelectionRow0(
 @Serializable
 data class FlowSelectionRow1(
     val role: String,
-    @JsonProperty("flowOptions")
-    @SerialName("flowOptions")
     val flowOptions: List<FlowSelectionOption>
 )
 
 @Serializable
 data class FlowSelectionOption(
-    @JsonProperty("flow_id")
-    @SerialName("flow_id")
-    val flow_id: Int,
+    val flowId: Int,
     val text: String
 )
 
@@ -88,8 +72,6 @@ data class Dialog(
     val roles: List<String>,
     val variables: Variables,
     val sequences: List<SequenceItem>,
-    @JsonProperty("flowsSelection")
-    @SerialName("flowsSelection")
     val flowsSelection: FlowsSelection,
     val flows: List<Flow>
 )

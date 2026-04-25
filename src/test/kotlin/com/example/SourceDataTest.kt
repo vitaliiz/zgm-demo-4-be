@@ -46,17 +46,17 @@ class SourceDataTest {
         assertEquals("Customer", parsedData.dialog.sequences[0].role)
 
         // Verify dialog flowsSelection
-        val row0 = parsedData.dialog.flowsSelection.row_0
+        val row0 = parsedData.dialog.flowsSelection.row0
         assertNotNull(row0)
         assertEquals("Customer", row0.role)
         assertEquals("Can I have a menu please ?", row0.text)
 
-        val row1 = parsedData.dialog.flowsSelection.row_1
+        val row1 = parsedData.dialog.flowsSelection.row1
         assertNotNull(row1)
         assertEquals("Waiter", row1.role)
         assertNotNull(row1.flowOptions)
         assertEquals(2, row1.flowOptions.size)
-        assertEquals(0, row1.flowOptions[0].flow_id)
+        assertEquals(0, row1.flowOptions[0].flowId)
 
         // Verify flows (deserialization of aliases points to the same object structure)
         assertEquals(2, parsedData.dialog.flows.size)
