@@ -6,9 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SourceData(
-    val roles: List<String>,
-    val variables: Variables,
-    val sequences: List<SequenceItem>,
     val dialog: Dialog
 )
 
@@ -44,38 +41,31 @@ data class MultiTextItem(
 )
 
 @Serializable
-data class Dialog(
-    val title: String,
-    val icon: String,
-    val iconBg: String,
-    val description: String,
-    @JsonProperty("flowsSelection")
-    @SerialName("flowsSelection")
-    val flowsSelection: FlowsSelection,
-    val flows: List<Flow>
-)
-
-@Serializable
 data class FlowsSelection(
     @JsonProperty("row_0")
     @SerialName("row_0")
-    val row_0: FlowSelectionRow,
+    val row_0: FlowSelectionRow0,
     @JsonProperty("row_1")
     @SerialName("row_1")
-    val row_1: FlowSelectionRow
+    val row_1: FlowSelectionRow1
 )
 
 @Serializable
-data class FlowSelectionRow(
+data class FlowSelectionRow0(
     val role: String,
-    val text: String? = null,
+    val text: String
+)
+
+@Serializable
+data class FlowSelectionRow1(
+    val role: String,
     @JsonProperty("flowOptions")
     @SerialName("flowOptions")
-    val flowOptions: List<FlowOption>? = null
+    val flowOptions: List<FlowSelectionOption>
 )
 
 @Serializable
-data class FlowOption(
+data class FlowSelectionOption(
     @JsonProperty("flow_id")
     @SerialName("flow_id")
     val flow_id: Int,
@@ -86,4 +76,20 @@ data class FlowOption(
 data class Flow(
     val id: Int,
     val sentences: List<SequenceItem>
+)
+
+
+@Serializable
+data class Dialog(
+    val title: String,
+    val icon: String,
+    val iconBg: String,
+    val description: String,
+    val roles: List<String>,
+    val variables: Variables,
+    val sequences: List<SequenceItem>,
+    @JsonProperty("flowsSelection")
+    @SerialName("flowsSelection")
+    val flowsSelection: FlowsSelection,
+    val flows: List<Flow>
 )

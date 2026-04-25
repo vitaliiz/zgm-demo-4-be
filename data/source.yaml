@@ -1,64 +1,61 @@
-### roles
-roles:
-  - &ROLE_A Customer
-  - &ROLE_B Waiter
-
-
-### variables
-variables:
-  name: subject
-  values:
-    - variable_id: 0
-      text: Menu
-    - variable_id: 1
-      text: Bill
-
-
-### sequences
-sequences:
-  - &SEQ_0
-    seq: 0
-    role: *ROLE_A
-    multiText:
-      -
-        variable_id: 0
-        text: &FLOW_SELECT_ROW_0 Can I have a menu please ?
-      -
-        variable_id: 1
-        text: May I have a bill please ?
-
-  - &SEQ_1_FLOW_0
-    seq: 1
-    role: *ROLE_B
-    multiText:
-      - text: &FLOW_SELECT_ROW_1_0 Yes sure
-
-  - &SEQ_1_FLOW_1
-    seq: 1
-    role: *ROLE_B
-    multiText:
-      - text: &FLOW_SELECT_ROW_1_1 Not right now
-
-
-### the dialog
 dialog:
   title: Ordering food
   icon: "🍕"
   iconBg: "#FEF3C7"
   description: Customer and waiter have a conversation in a restaurant.
 
-  flowsSelection:
-    row_0:
+  ###
+  roles:
+    - &ROLE_A Customer
+    - &ROLE_B Waiter
+
+  ###
+  variables:
+    name: subject
+    values:
+      - variable_id: 0
+        text: Menu
+      - variable_id: 1
+        text: Bill
+
+  ###
+  sequences:
+    - &SEQ_0
+      seq: 0
       role: *ROLE_A
-      text:
-        *FLOW_SELECT_ROW_0
-    row_1:
+      multiText:
+        -
+          variable_id: 0
+          text: &FLOW_SELECT_ROW_0 Can I have a menu please ?
+        -
+          variable_id: 1
+          text: May I have a bill please ?
+
+    - &SEQ_1_FLOW_0
+      seq: 1
       role: *ROLE_B
-      flowOptions:
-        - flow_id: 0
-          text: *FLOW_SELECT_ROW_1_0
-        - flow_id: 1
-          text: *FLOW_SELECT_ROW_1_1
+      multiText:
+        - text: &FLOW_SELECT_ROW_1_0 Yes sure
+
+    - &SEQ_1_FLOW_1
+      seq: 1
+      role: *ROLE_B
+      multiText:
+        - text: &FLOW_SELECT_ROW_1_1 Not right now
+
+  ###
+  flowsSelection:
+      row_0:
+        role: *ROLE_A
+        text:
+          *FLOW_SELECT_ROW_0
+      row_1:
+        role: *ROLE_B
+        flowOptions:
+          - flow_id: 0
+            text: *FLOW_SELECT_ROW_1_0
+          - flow_id: 1
+            text: *FLOW_SELECT_ROW_1_1
 
   flows:
     - id: 0

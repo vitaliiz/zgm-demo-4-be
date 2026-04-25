@@ -30,20 +30,20 @@ class SourceDataTest {
         // --- Assertions ---
 
         // Verify roles
-        assertNotNull(parsedData.roles)
-        assertEquals(2, parsedData.roles.size)
-        assertEquals("Customer", parsedData.roles[0])
-        assertEquals("Waiter", parsedData.roles[1])
+        assertNotNull(parsedData.dialog.roles)
+        assertEquals(2, parsedData.dialog.roles.size)
+        assertEquals("Customer", parsedData.dialog.roles[0])
+        assertEquals("Waiter", parsedData.dialog.roles[1])
 
         // Verify variables
-        assertEquals("subject", parsedData.variables.name)
-        assertEquals(2, parsedData.variables.values.size)
-        assertEquals("Menu", parsedData.variables.values[0].text)
+        assertEquals("subject", parsedData.dialog.variables.name)
+        assertEquals(2, parsedData.dialog.variables.values.size)
+        assertEquals("Menu", parsedData.dialog.variables.values[0].text)
 
         // Verify sequences (3 sequences defined in the 'sequences' section)
-        assertEquals(3, parsedData.sequences.size)
-        assertEquals(0, parsedData.sequences[0].seq)
-        assertEquals("Customer", parsedData.sequences[0].role)
+        assertEquals(3, parsedData.dialog.sequences.size)
+        assertEquals(0, parsedData.dialog.sequences[0].seq)
+        assertEquals("Customer", parsedData.dialog.sequences[0].role)
 
         // Verify dialog flowsSelection
         val row0 = parsedData.dialog.flowsSelection.row_0
@@ -55,8 +55,8 @@ class SourceDataTest {
         assertNotNull(row1)
         assertEquals("Waiter", row1.role)
         assertNotNull(row1.flowOptions)
-        assertEquals(2, row1.flowOptions!!.size)
-        assertEquals(0, row1.flowOptions!![0].flow_id)
+        assertEquals(2, row1.flowOptions.size)
+        assertEquals(0, row1.flowOptions[0].flow_id)
 
         // Verify flows (deserialization of aliases points to the same object structure)
         assertEquals(2, parsedData.dialog.flows.size)
