@@ -35,13 +35,13 @@ dialog:
       seq: 1
       role: *ROLE_B
       multiText:
-        - text: &FLOW_SELECT_ROW_1_0 Yes sure
+        - text: &FLOW_SELECT_ROW_1_0 Yes sure.
 
     - &SEQ_1_FLOW_1
       seq: 1
       role: *ROLE_B
       multiText:
-        - text: &FLOW_SELECT_ROW_1_1 Not right now
+        - text: &FLOW_SELECT_ROW_1_1 Not right now.
 
   ###
   flowsSelection:

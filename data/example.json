@@ -1,0 +1,107 @@
+{
+  "dialogs": [
+    {
+      "id": "0",
+      "title": "Ordering food",
+      "icon": "🍕",
+      "iconBg": "#FEF3C7",
+      "progress": {
+        "roles": "0/2",
+        "subjects": "0/3",
+        "flows": "0/2"
+      },
+      "language": "French",
+      "totalProgress": "0%",
+      "description": "Customer and waiter have a conversation in a restaurant.",
+      "roles": [
+        "Customer",
+        "Waiter"
+      ],
+      "variables": {
+        "name": "subject",
+        "values": [
+          {
+            "variable_id": 0,
+            "text": {
+              "native": "Menu",
+              "foreign": "Menu",
+              "audioUrl": "http://192.168.2.74:8080/media/voice/FR/5aOrGppzgPVuYdNDNzRvWI0UDiMZVIqjHUgIibVMozk="
+            }
+          },
+          {
+            "variable_id": 1,
+            "text": {
+              "native": "Bill",
+              "foreign": "Rekening",
+              "audioUrl": "http://192.168.2.74:8080/media/voice/FR/5aOrGppzgPVuYdNDNzRvWI0UDiMZVIqjHUgIibVMozk="
+            }
+          }
+        ]
+      },
+      "flowsSelection": [
+        {
+          "row": 0,
+          "role": "Customer",
+          "text": [
+            {
+              "native": "Can I have a menu please ?",
+              "foreign": "Mag ik een menu aljeblief ?"
+            }
+          ]
+        },
+        {
+          "row": 1,
+          "role": "Waiter",
+          "text": [
+            {
+              "flow_id": 0,
+              "native": "Yes sure",
+              "foreign": "Ja hoor"
+            },
+            {
+              "flow_id": 1,
+              "native": "Not right now",
+              "foreign": "Momenteel niet"
+            }
+          ]
+        }
+      ],
+      "flows": [
+        {
+          "id": 0,
+          "sentences": [
+            {
+              "seq": 0,
+              "role": "Customer",
+              "text": [
+                {
+                  "variable_id": 0,
+                  "native": "Can I have a menu please ?",
+                  "foreign": "Mag ik een menu aljeblief ?",
+                  "audioUrl": "http://192.168.2.74:8080/media/voice/FR/5aOrGppzgPVuYdNDNzRvWI0UDiMZVIqjHUgIibVMozk="
+                },
+                {
+                  "variable_id": 1,
+                  "native": "Can I have a bill please ?",
+                  "foreign": "Ik will graag afrekenen",
+                  "audioUrl": "http://192.168.2.74:8080/media/voice/FR/5aOrGppzgPVuYdNDNzRvWI0UDiMZVIqjHUgIibVMozk="
+                }
+              ]
+            },
+            {
+              "seq": 1,
+              "role": "Waiter",
+              "text": [
+                {
+                  "native": "Yes sure",
+                  "foreign": "Ja hoor",
+                  "audioUrl": "http://192.168.2.74:8080/media/voice/FR/5aOrGppzgPVuYdNDNzRvWI0UDiMZVIqjHUgIibVMozk="
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

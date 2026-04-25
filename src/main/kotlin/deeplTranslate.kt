@@ -12,6 +12,9 @@ import io.ktor.serialization.gson.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.File
+import java.security.MessageDigest
+import java.util.Base64
 
 @Serializable
 data class DeeplRequest(
@@ -26,6 +29,25 @@ data class DeeplResponseItem(val detected_source_language: String, val text: Str
 @Serializable
 data class DeeplResponse(val translations: List<DeeplResponseItem>)
 
+fun translate(lang: String, textEN: String): String {
+    val hashEN = toHash(textEN)
+    val file = File("./data/text/$lang/$hashEN")
+    if (file.exists()) {
+        return file.readText()
+    }
+    throw Exception("Translation file not foun for: $textEN")
+}
+
+fun translate(lang: String, textEN: String, contextEN: String): String {
+    val hashEN = toHash(textEN)
+    val file = File("./data/text/$lang/$hashEN")
+    if (file.exists()) {
+        return file.readText()
+    }
+    val translation = if (lang != "EN") deeplTranslate(textEN, contextEN, lang) else textEN
+    file.writeText(translation)
+    return translation
+}
 
 fun deeplTranslate(text: String, context: String, targetLang: String): String {
     return runBlocking {
@@ -50,4 +72,10 @@ fun deeplTranslate(text: String, context: String, targetLang: String): String {
         }
         Json.decodeFromString<DeeplResponse>(resp.bodyAsText()).translations[0].text
     }
+}
+
+fun toHash(text: String): String {
+    val sha256 = MessageDigest.getInstance("SHA-256")
+    val hashBytes = sha256.digest(text.toByteArray())
+    return Base64.getEncoder().encodeToString(hashBytes).replace("/", "_").replace("+", "-")
 }
