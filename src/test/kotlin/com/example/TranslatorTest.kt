@@ -5,8 +5,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class TranslatorTest {
@@ -32,13 +30,19 @@ class TranslatorTest {
             .filter { it.variableId == null || it.variableId == 0 }
             .joinToString("\\n") { it.text }
 
-        parsedData.dialog.variables.values.forEach { translate("NL", it.text, translationContextEN) }
+        parsedData.dialog.variables?.let {
+            parsedData.dialog.variables.values.forEach {
+                val translated = translate("NL", it.text, translationContextEN)
+                textToSpeech("NL", "nl-NL-MaartenNeural", it.text, translated)
+            }
+        }
 
         parsedData.dialog.sequences
             .flatMap { it.multiText }
             .map { it.text }
             .forEach { textEN ->
-                translate("NL", textEN, translationContextEN)
+                val translated = translate("NL", textEN, translationContextEN)
+                textToSpeech("NL", "nl-NL-MaartenNeural", textEN, translated)
             }
     }
 }

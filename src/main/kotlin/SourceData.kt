@@ -65,13 +65,14 @@ data class Flow(
 
 @Serializable
 data class Dialog(
+    val id: String,
     val title: String,
     val icon: String,
     val iconBg: String,
     val description: String,
     val roles: List<String>,
-    val variables: Variables,
+    val variables: Variables? = null,
     val sequences: List<SequenceItem>,
-    val flowsSelection: FlowsSelection,
+    val flowsSelection: FlowsSelection? = null,
     val flows: List<Flow>
 )

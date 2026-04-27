@@ -15,12 +15,10 @@ data class ExampleDialog(
     val icon: String,
     val iconBg: String,
     val progress: ExampleProgress,
-    val language: String,
-    val totalProgress: String,
     val description: String,
     val roles: List<String>,
-    val variables: ExampleVariables,
-    val flowsSelection: List<ExampleFlowSelectionItem>,
+    val variables: ExampleVariables? = null,
+    val flowsSelection: List<ExampleFlowSelectionItem>? = null,
     val flows: List<ExampleFlow>
 )
 

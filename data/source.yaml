@@ -1,4 +1,5 @@
 dialog:
+  id: "0"
   title: Ordering food
   icon: "🍕"
   iconBg: "#FEF3C7"

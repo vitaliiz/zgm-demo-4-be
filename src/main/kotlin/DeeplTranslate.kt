@@ -13,8 +13,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.security.MessageDigest
-import java.util.Base64
 
 @Serializable
 data class DeeplRequest(
@@ -72,10 +70,4 @@ fun deeplTranslate(text: String, context: String, targetLang: String): String {
         }
         Json.decodeFromString<DeeplResponse>(resp.bodyAsText()).translations[0].text
     }
-}
-
-fun toHash(text: String): String {
-    val sha256 = MessageDigest.getInstance("SHA-256")
-    val hashBytes = sha256.digest(text.toByteArray())
-    return Base64.getEncoder().encodeToString(hashBytes).replace("/", "_").replace("+", "-")
 }
