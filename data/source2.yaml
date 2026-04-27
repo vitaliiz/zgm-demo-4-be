@@ -1,0 +1,31 @@
+dialog:
+  id: "2"
+  title: Ordering food
+  icon: "🍕"
+  iconBg: "#FEF3C7"
+  description: Customer and waiter have a conversation in a restaurant.
+
+  ###
+  roles:
+    - &ROLE_A Customer
+    - &ROLE_B Waiter
+
+  ###
+  sequences:
+    - &SEQ_0
+      seq: 0
+      role: *ROLE_A
+      multiText:
+        - text: Can I have a menu please ?
+
+    - &SEQ_1
+      seq: 1
+      role: *ROLE_B
+      multiText:
+        - text: Yes sure.
+
+  flows:
+    - id: 0
+      sentences:
+        - *SEQ_0
+        - *SEQ_1
