@@ -58,7 +58,7 @@ fun buildExampleDialog(sourceData : SourceData) : ExampleDialog =
                             translate(
                                 "NL",
                                 it.text),
-                            "http://localhost:8080/media/voice/NL/${toHash(it.text)}")
+                            "http://192.168.2.74:8080/media/voice/NL/${toHash(it.text)}")
                     )
                 }
             )
@@ -105,7 +105,7 @@ fun buildExampleDialog(sourceData : SourceData) : ExampleDialog =
                             it3.variableId,
                             it3.text,
                             translate("NL", it3.text),
-                            "http://localhost:8080/media/voice/NL/${toHash(it3.text)}"
+                            "http://192.168.2.74:8080/media/voice/NL/${toHash(it3.text)}"
                         )
                     }
                 )
