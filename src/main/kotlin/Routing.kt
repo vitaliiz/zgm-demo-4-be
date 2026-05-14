@@ -11,9 +11,9 @@ import org.example.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
-fun Application.configureRouting() {
+fun configureRouting(app: Application) {
     DatabaseFactory.init()
-    routing {
+    app.routing {
         staticFiles("/media", File("data")) {
             contentType { _ -> ContentType.Audio.MPEG }
         }
