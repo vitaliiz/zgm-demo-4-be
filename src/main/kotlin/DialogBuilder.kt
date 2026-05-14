@@ -26,11 +26,25 @@ fun buildDialogList(): List<ExampleDialog> {
             val roleB = getRole(rolesMap,dialogRow[DialogTable.roleBId].value)
 
             // Fetch flows for this dialog
-            val flowRecords = (DialogFlowStepSentenceTable innerJoin SentenceTable)
+            val flowRecords = (DialogFlowStepSentenceTable innerJoin SentenceTable innerJoin WordTable)
                 .selectAll()
                 .where { DialogFlowStepSentenceTable.dialogId eq dialogId }
                 .orderBy(DialogFlowStepSentenceTable.flowId to SortOrder.ASC, DialogFlowStepSentenceTable.step to SortOrder.ASC)
                 .toList()
+
+            val variablesList = flowRecords.distinctBy { it[DialogFlowStepSentenceTable.wordId] }.map { row ->
+                val wordText = row[WordTable.word]
+                val wordId = row[DialogFlowStepSentenceTable.wordId].value
+                ExampleVariableValue(
+                    variableId = wordId,
+                    text = ExampleTextWithAudio(
+                        native = wordText,
+                        foreign = getTranslation("NL", wordText),
+                        audioUrl = "http://192.168.2.74:8080/media/voice/NL/${toHash(wordText)}"
+                    )
+                )
+            }
+            val variables = if (variablesList.isNotEmpty()) ExampleVariables(name = "subject", values = variablesList) else null
 
             val flows = flowRecords.groupBy { it[DialogFlowStepSentenceTable.flowId] }.map { (flowId, flowRows) ->
                 val sentences = flowRows.groupBy { it[DialogFlowStepSentenceTable.step] to it[DialogFlowStepSentenceTable.roleId] }
@@ -61,7 +75,7 @@ fun buildDialogList(): List<ExampleDialog> {
                 progress = ExampleProgress("roles:1", "subjects:2", "flows:3"),
                 description = dialogRow[DialogTable.description],
                 roles = listOf(roleA, roleB),
-                variables = null,
+                variables = variables,
                 flowsSelection = null,
                 flows = flows
             )
