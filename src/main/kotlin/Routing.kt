@@ -1,7 +1,5 @@
 package com.example
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.http.ContentType
 import io.ktor.server.application.*
 import io.ktor.server.http.content.staticFiles
@@ -9,106 +7,82 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import java.io.File
-import org.yaml.snakeyaml.Yaml
-
+import org.example.*
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureRouting() {
+    DatabaseFactory.init()
     routing {
         staticFiles("/media", File("data")) {
             contentType { _ -> ContentType.Audio.MPEG }
         }
         get("/dialogs") {
-            val dialogs = ExampleData(
-                listOf(
-                    buildExampleDialog(readSourceData("data/source.yaml")),
-                    buildExampleDialog(readSourceData("data/source1.yaml")),
-                    buildExampleDialog(readSourceData("data/source2.yaml"))
-                )
-            )
+            val dialogsList = transaction {
+                val rolesMap = (RoleTable innerJoin WordTable).selectAll().associate {
+                    it[RoleTable.id].value to it[WordTable.word]
+                }
 
-            call.respondText(Json.encodeToString(dialogs))
+                DialogTable.selectAll().map { dialogRow ->
+                    val dialogId = dialogRow[DialogTable.id].value
+                    
+                    val roleA = rolesMap[dialogRow[DialogTable.roleAId].value] ?: "Role A"
+                    val roleB = rolesMap[dialogRow[DialogTable.roleBId].value] ?: "Role B"
+
+                    // Fetch flows for this dialog
+                    val flowRecords = (DialogFlowStepSentenceTable innerJoin SentenceTable)
+                        .select { DialogFlowStepSentenceTable.dialogId eq dialogId }
+                        .orderBy(DialogFlowStepSentenceTable.flowId to SortOrder.ASC, DialogFlowStepSentenceTable.step to SortOrder.ASC)
+                        .toList()
+
+                    val flows = flowRecords.groupBy { it[DialogFlowStepSentenceTable.flowId] }.map { (flowId, flowRows) ->
+                        val sentences = flowRows.groupBy { it[DialogFlowStepSentenceTable.step] to it[DialogFlowStepSentenceTable.roleId] }
+                            .map { (key, stepRoleRows) ->
+                                val (step, roleId) = key
+                                ExampleSentence(
+                                    seq = step,
+                                    role = rolesMap[roleId.value] ?: "Unknown",
+                                    text = stepRoleRows.map { row ->
+                                        val nativeText = row[SentenceTable.text]
+                                        ExampleSentenceText(
+                                            variableId = row[DialogFlowStepSentenceTable.wordId].value,
+                                            native = nativeText,
+                                            foreign = translate("NL", nativeText),
+                                            audioUrl = "http://192.168.2.74:8080/media/voice/NL/${toHash(nativeText)}"
+                                        )
+                                    }
+                                )
+                            }
+                        ExampleFlow(id = flowId, sentences = sentences)
+                    }
+
+                    ExampleDialog(
+                        id = dialogId.toString(),
+                        title = dialogRow[DialogTable.title],
+                        icon = dialogRow[DialogTable.icon],
+                        iconBg = dialogRow[DialogTable.iconBackground],
+                        progress = ExampleProgress("roles:1", "subjects:2", "flows:3"),
+                        description = dialogRow[DialogTable.description],
+                        roles = listOf(roleA, roleB),
+                        variables = null,
+                        flowsSelection = null,
+                        flows = flows
+                    )
+                }
+            }
+
+            val response = ExampleData(dialogsList)
+            call.respondText(Json.encodeToString(response))
         }
     }
 }
 
-fun readSourceData(fileName : String): SourceData {
-    val yamlFile = File(fileName)
-    val yamlLoader = Yaml()
-    val rawMap: Map<String, Any> = yamlLoader.load(yamlFile.inputStream())
-    val mapper = ObjectMapper().registerKotlinModule()
-    return mapper.convertValue(rawMap, SourceData::class.java)
-}
+fun translate(lang: String, text: String): String {
+    val hash = toHash(text)
+    return transaction {
+        TranslationTable.selectAll().where {
+            (TranslationTable.hashEn eq hash) and (TranslationTable.lang eq lang)
+        }.firstOrNull()?.get(TranslationTable.translated)
+    } ?: throw Exception("Translation not found: $lang, \"$text\"")
 
-fun buildExampleDialog(sourceData : SourceData) : ExampleDialog =
-    ExampleDialog(
-        id = sourceData.dialog.id,
-        title = sourceData.dialog.title,
-        icon = sourceData.dialog.icon,
-        iconBg = sourceData.dialog.iconBg,
-        progress = ExampleProgress("roles:1", "subjects:2", "flows:3"),
-        description = sourceData.dialog.description,
-        roles = sourceData.dialog.roles,
-        variables = sourceData.dialog.variables?.let{
-            ExampleVariables("subj",
-                sourceData.dialog.variables.values.map{
-                    ExampleVariableValue(
-                        it.variableId,
-                        ExampleTextWithAudio(
-                            it.text,
-                            translate(
-                                "NL",
-                                it.text),
-                            "http://192.168.2.74:8080/media/voice/NL/${toHash(it.text)}")
-                    )
-                }
-            )
-        },
-        flowsSelection = sourceData.dialog.flowsSelection?.let{
-            listOf(
-                ExampleFlowSelectionItem(
-                    0,
-                    sourceData.dialog.flowsSelection.row0.role,
-                    listOf(
-                        ExampleFlowSelectionText(
-                            null,
-                            sourceData.dialog.flowsSelection.row0.text,
-                            translate("NL", sourceData.dialog.flowsSelection.row0.text)
-                        )
-                    )
-                ),
-                ExampleFlowSelectionItem(
-                    1,
-                    sourceData.dialog.flowsSelection.row1.role,
-                    listOf(
-                        ExampleFlowSelectionText(
-                            sourceData.dialog.flowsSelection.row1.flowOptions[0].flowId,
-                            sourceData.dialog.flowsSelection.row1.flowOptions[0].text,
-                            translate("NL", sourceData.dialog.flowsSelection.row1.flowOptions[0].text)
-                        ),
-                        ExampleFlowSelectionText(
-                            sourceData.dialog.flowsSelection.row1.flowOptions[1].flowId,
-                            sourceData.dialog.flowsSelection.row1.flowOptions[1].text,
-                            translate("NL", sourceData.dialog.flowsSelection.row1.flowOptions[1].text)
-                        )
-                    )
-                )
-            )
-        },
-        flows = sourceData.dialog.flows.map { ExampleFlow (
-            it.id,
-            it.sentences.map { it2 ->
-                ExampleSentence(
-                    it2.seq,
-                    it2.role,
-                    it2.multiText.map { it3 ->
-                        ExampleSentenceText(
-                            it3.variableId,
-                            it3.text,
-                            translate("NL", it3.text),
-                            "http://192.168.2.74:8080/media/voice/NL/${toHash(it3.text)}"
-                        )
-                    }
-                )
-            }
-        ) }
-    )
+}
