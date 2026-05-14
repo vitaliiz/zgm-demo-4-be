@@ -8,7 +8,6 @@ import org.example.TranslationTable
 import org.example.WordTable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.collections.component1
@@ -23,12 +22,13 @@ fun buildDialogList(): List<ExampleDialog> {
         DialogTable.selectAll().map { dialogRow ->
             val dialogId = dialogRow[DialogTable.id].value
 
-            val roleA = rolesMap[dialogRow[DialogTable.roleAId].value] ?: "Role A"
-            val roleB = rolesMap[dialogRow[DialogTable.roleBId].value] ?: "Role B"
+            val roleA = getRole(rolesMap,dialogRow[DialogTable.roleAId].value)
+            val roleB = getRole(rolesMap,dialogRow[DialogTable.roleBId].value)
 
             // Fetch flows for this dialog
             val flowRecords = (DialogFlowStepSentenceTable innerJoin SentenceTable)
-                .select { DialogFlowStepSentenceTable.dialogId eq dialogId }
+                .selectAll()
+                .where { DialogFlowStepSentenceTable.dialogId eq dialogId }
                 .orderBy(DialogFlowStepSentenceTable.flowId to SortOrder.ASC, DialogFlowStepSentenceTable.step to SortOrder.ASC)
                 .toList()
 
@@ -38,13 +38,13 @@ fun buildDialogList(): List<ExampleDialog> {
                         val (step, roleId) = key
                         ExampleSentence(
                             seq = step,
-                            role = rolesMap[roleId.value] ?: "Unknown",
+                            role = getRole(rolesMap,roleId.value),
                             text = stepRoleRows.map { row ->
                                 val nativeText = row[SentenceTable.text]
                                 ExampleSentenceText(
                                     variableId = row[DialogFlowStepSentenceTable.wordId].value,
                                     native = nativeText,
-                                    foreign = translate("NL", nativeText),
+                                    foreign = getTranslation("NL", nativeText),
                                     audioUrl = "http://192.168.2.74:8080/media/voice/NL/${toHash(nativeText)}"
                                 )
                             }
@@ -72,7 +72,11 @@ fun buildDialogList(): List<ExampleDialog> {
 }
 
 
-fun translate(lang: String, text: String): String {
+private fun getRole(rolesMap:  Map<Int, String>, roleId: Int): String =
+    rolesMap[roleId] ?: throw Exception("role_id ${roleId} not found")
+
+
+private fun getTranslation(lang: String, text: String): String {
     val hash = toHash(text)
     return transaction {
         TranslationTable.selectAll().where {
