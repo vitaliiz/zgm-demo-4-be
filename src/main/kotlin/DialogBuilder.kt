@@ -32,7 +32,10 @@ fun buildDialogList(): List<ExampleDialog> {
                 .orderBy(DialogFlowStepSentenceTable.flowId to SortOrder.ASC, DialogFlowStepSentenceTable.step to SortOrder.ASC)
                 .toList()
 
-            val variablesList = flowRecords.distinctBy { it[DialogFlowStepSentenceTable.wordId] }.map { row ->
+            val variablesList = flowRecords
+                .filter { it[WordTable.word] != "NULL" }
+                .distinctBy { it[DialogFlowStepSentenceTable.wordId] }
+                .map { row ->
                 val wordText = row[WordTable.word]
                 val wordId = row[DialogFlowStepSentenceTable.wordId].value
                 ExampleVariableValue(
