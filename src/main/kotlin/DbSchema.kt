@@ -1,5 +1,3 @@
-package org.example
-
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Table
 
@@ -32,6 +30,15 @@ object DialogFlowStepSentenceTable : Table("dialog_flow_step_sentence") {
     val sentenceId = reference("sentence_id", SentenceTable)
     val roleId = reference("role_id", RoleTable)
     override val primaryKey = PrimaryKey(dialogId, flowId, step, sentenceId, roleId)
+}
+
+object DialogFlowSelectionTable : Table("dialog_flow_selection") {
+    val dialogId = reference("dialog_id", DialogTable)
+    val row0Role = reference("row_0_role", RoleTable)
+    val row1Role = reference("row_1_role", RoleTable)
+    val row0Text = text("row_0_text")
+    val row1Flow0Text = text("row_1_flow_0_text")
+    val row1Flow1Text = text("row_1_flow_1_text")
 }
 
 object TranslationTable : IntIdTable("translation") {

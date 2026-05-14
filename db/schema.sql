@@ -33,6 +33,15 @@ CREATE TABLE dialog_flow_step_sentence (
     PRIMARY KEY (dialog_id, flow_id, step, sentence_id, role_id)
 );
 
+CREATE TABLE dialog_flow_selection (
+    dialog_id           INTEGER NOT NULL REFERENCES dialog(id),
+    row_0_role          INTEGER NOT NULL UNIQUE REFERENCES role(id),
+    row_1_role          INTEGER NOT NULL UNIQUE REFERENCES role(id),
+    row_0_text          TEXT NOT NULL,
+    row_1_flow_0_text   TEXT NOT NULL,
+    row_1_flow_1_text   TEXT NOT NULL
+);
+
 CREATE TABLE translation (
     id          INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     hash_en     VARCHAR(100) NOT NULL,
