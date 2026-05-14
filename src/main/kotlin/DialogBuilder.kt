@@ -1,11 +1,5 @@
 package com.example
 
-import org.example.DialogFlowStepSentenceTable
-import org.example.DialogTable
-import org.example.RoleTable
-import org.example.SentenceTable
-import org.example.TranslationTable
-import org.example.WordTable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
@@ -70,6 +64,39 @@ fun buildDialogList(): List<ExampleDialog> {
                 ExampleFlow(id = flowId, sentences = sentences)
             }
 
+            val flowsSelection = DialogFlowSelectionTable.selectAll().where { DialogFlowSelectionTable.dialogId eq dialogId }
+                .firstOrNull()?.let { selectionRow ->
+                    listOf(
+                        ExampleFlowSelectionItem(
+                            row = 0,
+                            role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row0Role].value),
+                            text = listOf(
+                                ExampleFlowSelectionText(
+                                    flowId = null,
+                                    native = selectionRow[DialogFlowSelectionTable.row0Text],
+                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row0Text])
+                                )
+                            )
+                        ),
+                        ExampleFlowSelectionItem(
+                            row = 1,
+                            role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row1Role].value),
+                            text = listOf(
+                                ExampleFlowSelectionText(
+                                    flowId = 0,
+                                    native = selectionRow[DialogFlowSelectionTable.row1Flow0Text],
+                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow0Text])
+                                ),
+                                ExampleFlowSelectionText(
+                                    flowId = 1,
+                                    native = selectionRow[DialogFlowSelectionTable.row1Flow1Text],
+                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow1Text])
+                                )
+                            )
+                        )
+                    )
+                }
+
             ExampleDialog(
                 id = dialogId.toString(),
                 title = dialogRow[DialogTable.title],
@@ -79,7 +106,7 @@ fun buildDialogList(): List<ExampleDialog> {
                 description = dialogRow[DialogTable.description],
                 roles = listOf(roleA, roleB),
                 variables = variables,
-                flowsSelection = null,
+                flowsSelection = flowsSelection,
                 flows = flows
             )
         }

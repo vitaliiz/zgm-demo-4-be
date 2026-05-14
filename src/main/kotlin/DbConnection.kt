@@ -1,4 +1,4 @@
-package org.example
+package com.example
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -13,7 +13,7 @@ object DatabaseFactory {
         Database.connect(jdbcUrl, driverClassName, user, password)
         transaction {
             SchemaUtils.createMissingTablesAndColumns(
-                WordTable, RoleTable, SentenceTable, DialogTable, DialogFlowStepSentenceTable, TranslationTable, VoiceTable
+                WordTable, RoleTable, SentenceTable, DialogTable, DialogFlowStepSentenceTable, DialogFlowSelectionTable, TranslationTable, VoiceTable
             )
         }
     }
