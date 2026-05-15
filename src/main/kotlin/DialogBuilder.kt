@@ -83,12 +83,12 @@ fun buildDialogList(): List<ExampleDialog> {
                             role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row1Role].value),
                             text = listOf(
                                 ExampleFlowSelectionText(
-                                    flowId = 0,
+                                    flowId = 1,
                                     native = selectionRow[DialogFlowSelectionTable.row1Flow0Text],
                                     foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow0Text])
                                 ),
                                 ExampleFlowSelectionText(
-                                    flowId = 1,
+                                    flowId = 2,
                                     native = selectionRow[DialogFlowSelectionTable.row1Flow1Text],
                                     foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow1Text])
                                 )
