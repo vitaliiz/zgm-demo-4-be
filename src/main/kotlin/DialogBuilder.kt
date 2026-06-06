@@ -1,37 +1,37 @@
 package com.example
 
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.collections.component1
-import kotlin.collections.component2
 
-fun buildDialogList(): List<ExampleDialog> {
-    val dialogsList = transaction {
-        val rolesMap = (RoleTable innerJoin WordTable).selectAll().associate {
-            it[RoleTable.id].value to it[WordTable.word]
-        }
+fun buildDialogList(): List<ExampleDialog> = transaction {
+    val rolesMap = (RoleTable innerJoin WordTable).selectAll().associate {
+        it[RoleTable.id].value to it[WordTable.word]
+    }
 
-        DialogTable.selectAll().map { dialogRow ->
-            val dialogId = dialogRow[DialogTable.id].value
+    DialogTable.selectAll().map { dialogRow ->
+        val dialogId = dialogRow[DialogTable.id].value
+        val title = dialogRow[DialogTable.title]
+        val description = dialogRow[DialogTable.description]
+        val icon = dialogRow[DialogTable.icon]
+        val iconBg = dialogRow[DialogTable.iconBackground]
+        val roleAId = dialogRow[DialogTable.roleAId].value
+        val roleBId = dialogRow[DialogTable.roleBId].value
 
-            val roleA = getRole(rolesMap,dialogRow[DialogTable.roleAId].value)
-            val roleB = getRole(rolesMap,dialogRow[DialogTable.roleBId].value)
+        val roleA = getRole(rolesMap, roleAId)
+        val roleB = getRole(rolesMap, roleBId)
 
-            // Fetch flows for this dialog
-            val flowRecords = (DialogFlowStepSentenceTable innerJoin SentenceTable innerJoin WordTable)
-                .selectAll()
-                .where { DialogFlowStepSentenceTable.dialogId eq dialogId }
-                .orderBy(DialogFlowStepSentenceTable.flowId to SortOrder.ASC, DialogFlowStepSentenceTable.step to SortOrder.ASC)
-                .toList()
+        // Fetch alternatives for variables
+        val alternativesRows = (DialogAlternativeTable innerJoin AlternativeTable innerJoin WordTable innerJoin SentenceTable)
+            .selectAll()
+            .where { DialogAlternativeTable.dialogId eq dialogId }
+            .toList()
 
-            val variablesList = flowRecords
-                .filter { it[WordTable.word] != "NULL" }
-                .distinctBy { it[DialogFlowStepSentenceTable.wordId] }
-                .map { row ->
+        val variablesList = alternativesRows
+            .distinctBy { it[AlternativeTable.wordId] }
+            .map { row ->
                 val wordText = row[WordTable.word]
-                val wordId = row[DialogFlowStepSentenceTable.wordId].value
+                val wordId = row[AlternativeTable.wordId].value
                 ExampleVariableValue(
                     variableId = wordId,
                     text = ExampleTextWithAudio(
@@ -41,84 +41,110 @@ fun buildDialogList(): List<ExampleDialog> {
                     )
                 )
             }
-            val variables = if (variablesList.isNotEmpty()) ExampleVariables(name = "subject", values = variablesList) else null
+        val variables = if (variablesList.isNotEmpty()) ExampleVariables(name = "subject", values = variablesList) else null
 
-            val flows = flowRecords.groupBy { it[DialogFlowStepSentenceTable.flowId] }.map { (flowId, flowRows) ->
-                val sentences = flowRows.groupBy { it[DialogFlowStepSentenceTable.step] to it[DialogFlowStepSentenceTable.roleId] }
-                    .map { (key, stepRoleRows) ->
-                        val (step, roleId) = key
-                        ExampleSentence(
-                            seq = step,
-                            role = getRole(rolesMap,roleId.value),
-                            text = stepRoleRows.map { row ->
-                                val nativeText = row[SentenceTable.text]
-                                ExampleSentenceText(
-                                    variableId = row[DialogFlowStepSentenceTable.wordId].value,
-                                    native = nativeText,
-                                    foreign = getTranslation("NL", nativeText),
-                                    audioUrl = "http://192.168.2.74:8080/media/voice/NL/${toHash(nativeText)}"
-                                )
-                            }
+        // Fetch base sentences
+        val baseSentencesRows = (DialogFlowStepSentenceTable innerJoin SentenceTable)
+            .selectAll()
+            .where { DialogFlowStepSentenceTable.dialogId eq dialogId }
+            .toList()
+
+        // Combine all sentences for flows
+        val allSentences = baseSentencesRows.map { row ->
+            SentenceInfo(
+                flowId = row[DialogFlowStepSentenceTable.flowId],
+                step = row[DialogFlowStepSentenceTable.step],
+                roleId = row[DialogFlowStepSentenceTable.roleId].value,
+                sentenceText = row[SentenceTable.text],
+                variableId = null
+            )
+        } + alternativesRows.map { row ->
+            SentenceInfo(
+                flowId = row[AlternativeTable.flowId],
+                step = row[AlternativeTable.step],
+                roleId = row[AlternativeTable.roleId].value,
+                sentenceText = row[SentenceTable.text],
+                variableId = row[AlternativeTable.wordId].value
+            )
+        }
+
+        val flows = allSentences.groupBy { it.flowId }.map { (flowId, flowSentences) ->
+            val sentences = flowSentences.groupBy { it.step }.map { (step, stepSentences) ->
+                val roleId = stepSentences.first().roleId
+                ExampleSentence(
+                    seq = step,
+                    role = getRole(rolesMap, roleId),
+                    text = stepSentences.map { s ->
+                        ExampleSentenceText(
+                            variableId = s.variableId,
+                            native = s.sentenceText,
+                            foreign = getTranslation("NL", s.sentenceText),
+                            audioUrl = "http://192.168.2.74:8080/media/voice/NL/${toHash(s.sentenceText)}"
                         )
                     }
-                ExampleFlow(id = flowId, sentences = sentences)
-            }
+                )
+            }.sortedBy { it.seq }
+            ExampleFlow(id = flowId, sentences = sentences)
+        }.sortedBy { it.id }
 
-            val flowsSelection = DialogFlowSelectionTable.selectAll().where { DialogFlowSelectionTable.dialogId eq dialogId }
-                .firstOrNull()?.let { selectionRow ->
-                    listOf(
-                        ExampleFlowSelectionItem(
-                            row = 0,
-                            role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row0Role].value),
-                            text = listOf(
-                                ExampleFlowSelectionText(
-                                    flowId = null,
-                                    native = selectionRow[DialogFlowSelectionTable.row0Text],
-                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row0Text])
-                                )
+        val flowsSelection = DialogFlowSelectionTable.selectAll().where { DialogFlowSelectionTable.dialogId eq dialogId }
+            .firstOrNull()?.let { selectionRow ->
+                listOf(
+                    ExampleFlowSelectionItem(
+                        row = 0,
+                        role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row0Role].value),
+                        text = listOf(
+                            ExampleFlowSelectionText(
+                                flowId = null,
+                                native = selectionRow[DialogFlowSelectionTable.row0Text],
+                                foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row0Text])
                             )
-                        ),
-                        ExampleFlowSelectionItem(
-                            row = 1,
-                            role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row1Role].value),
-                            text = listOf(
-                                ExampleFlowSelectionText(
-                                    flowId = 1,
-                                    native = selectionRow[DialogFlowSelectionTable.row1Flow0Text],
-                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow0Text])
-                                ),
-                                ExampleFlowSelectionText(
-                                    flowId = 2,
-                                    native = selectionRow[DialogFlowSelectionTable.row1Flow1Text],
-                                    foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow1Text])
-                                )
+                        )
+                    ),
+                    ExampleFlowSelectionItem(
+                        row = 1,
+                        role = getRole(rolesMap, selectionRow[DialogFlowSelectionTable.row1Role].value),
+                        text = listOf(
+                            ExampleFlowSelectionText(
+                                flowId = 1,
+                                native = selectionRow[DialogFlowSelectionTable.row1Flow0Text],
+                                foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow0Text])
+                            ),
+                            ExampleFlowSelectionText(
+                                flowId = 2,
+                                native = selectionRow[DialogFlowSelectionTable.row1Flow1Text],
+                                foreign = getTranslation("NL", selectionRow[DialogFlowSelectionTable.row1Flow1Text])
                             )
                         )
                     )
-                }
+                )
+            }
 
-            ExampleDialog(
-                id = dialogId.toString(),
-                title = dialogRow[DialogTable.title],
-                icon = dialogRow[DialogTable.icon],
-                iconBg = dialogRow[DialogTable.iconBackground],
-                progress = ExampleProgress("roles:1", "subjects:2", "flows:3"),
-                description = dialogRow[DialogTable.description],
-                roles = listOf(roleA, roleB),
-                variables = variables,
-                flowsSelection = flowsSelection,
-                flows = flows
-            )
-        }
+        ExampleDialog(
+            id = dialogId.toString(),
+            title = title,
+            icon = icon,
+            iconBg = iconBg,
+            progress = ExampleProgress("roles:1", "subjects:2", "flows:3"),
+            description = description,
+            roles = listOf(roleA, roleB),
+            variables = variables,
+            flowsSelection = flowsSelection,
+            flows = flows
+        )
     }
-
-    return dialogsList
 }
 
+private data class SentenceInfo(
+    val flowId: Int,
+    val step: Int,
+    val roleId: Int,
+    val sentenceText: String,
+    val variableId: Int?
+)
 
-private fun getRole(rolesMap:  Map<Int, String>, roleId: Int): String =
-    rolesMap[roleId] ?: throw Exception("role_id ${roleId} not found")
-
+private fun getRole(rolesMap: Map<Int, String>, roleId: Int): String =
+    rolesMap[roleId] ?: throw Exception("role_id $roleId not found")
 
 private fun getTranslation(lang: String, text: String): String {
     val hash = toHash(text)

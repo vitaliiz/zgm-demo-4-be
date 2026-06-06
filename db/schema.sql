@@ -13,7 +13,16 @@ CREATE TABLE sentence (
     text    TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE dialog(
+CREATE TABLE alternative (
+    id      INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    wordId  INTEGER NOT NULL REFERENCES word(id),
+    flow_id INTEGER NOT NULL,
+    step    INTEGER NOT NULL,
+    sentence_id INTEGER NOT NULL REFERENCES sentence(id),
+    role_id     INTEGER NOT NULL REFERENCES role(id)
+);
+
+CREATE TABLE dialog (
     id                  INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     title               TEXT NOT NULL,
     description         TEXT NOT NULL,
@@ -23,20 +32,26 @@ CREATE TABLE dialog(
     role_b_id           INTEGER NOT NULL REFERENCES role (id)
 );
 
+CREATE TABLE dialog_alternative (
+    dialog_id      INTEGER NOT NULL REFERENCES dialog (id),
+    alternative_id INTEGER NOT NULL REFERENCES alternative (id),
+    UNIQUE (dialog_id, alternative_id)
+);
+
 CREATE TABLE dialog_flow_step_sentence (
     dialog_id           INTEGER NOT NULL REFERENCES dialog(id),
     flow_id             INTEGER NOT NULL,
     step                INTEGER NOT NULL,
-    word_id             INTEGER NOT NULL REFERENCES word(id),
     sentence_id         INTEGER NOT NULL REFERENCES sentence(id),
     role_id             INTEGER NOT NULL REFERENCES role(id),
-    PRIMARY KEY (dialog_id, flow_id, step, sentence_id, role_id)
+    PRIMARY KEY (dialog_id, flow_id, step, sentence_id, role_id),
+    UNIQUE (dialog_id, flow_id, step)
 );
 
 CREATE TABLE dialog_flow_selection (
     dialog_id           INTEGER NOT NULL REFERENCES dialog(id),
-    row_0_role          INTEGER NOT NULL UNIQUE REFERENCES role(id),
-    row_1_role          INTEGER NOT NULL UNIQUE REFERENCES role(id),
+    row_0_role          INTEGER NOT NULL REFERENCES role(id),
+    row_1_role          INTEGER NOT NULL REFERENCES role(id),
     row_0_text          TEXT NOT NULL,
     row_1_flow_0_text   TEXT NOT NULL,
     row_1_flow_1_text   TEXT NOT NULL

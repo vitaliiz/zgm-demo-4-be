@@ -28,10 +28,28 @@ object DialogFlowStepSentenceTable : Table("dialog_flow_step_sentence") {
     val dialogId = reference("dialog_id", DialogTable)
     val flowId = integer("flow_id")
     val step = integer("step")
-    val wordId = reference("word_id", WordTable)
     val sentenceId = reference("sentence_id", SentenceTable)
     val roleId = reference("role_id", RoleTable)
+    
+    init {
+        uniqueIndex(dialogId, flowId, step)
+    }
+    
     override val primaryKey = PrimaryKey(dialogId, flowId, step, sentenceId, roleId)
+}
+
+object AlternativeTable : IntIdTable("alternative") {
+    val wordId = reference("wordid", WordTable)
+    val flowId = integer("flow_id")
+    val step = integer("step")
+    val sentenceId = reference("sentence_id", SentenceTable)
+    val roleId = reference("role_id", RoleTable)
+}
+
+object DialogAlternativeTable : Table("dialog_alternative") {
+    val dialogId = reference("dialog_id", DialogTable)
+    val alternativeId = reference("alternative_id", AlternativeTable)
+    override val primaryKey = PrimaryKey(dialogId, alternativeId)
 }
 
 object DialogFlowSelectionTable : Table("dialog_flow_selection") {
