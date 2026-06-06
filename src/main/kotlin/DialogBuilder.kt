@@ -71,10 +71,13 @@ fun buildDialogList(): List<ExampleDialog> = transaction {
         val flows = allSentences.groupBy { it.flowId }.map { (flowId, flowSentences) ->
             val sentences = flowSentences.groupBy { it.step }.map { (step, stepSentences) ->
                 val roleId = stepSentences.first().roleId
+                val hasAlternatives = stepSentences.any { it.variableId != null }
+                val targetSentences = if (hasAlternatives) stepSentences.filter { it.variableId != null } else stepSentences
+
                 ExampleSentence(
                     seq = step,
                     role = getRole(rolesMap, roleId),
-                    text = stepSentences.map { s ->
+                    text = targetSentences.map { s ->
                         ExampleSentenceText(
                             variableId = s.variableId,
                             native = s.sentenceText,
