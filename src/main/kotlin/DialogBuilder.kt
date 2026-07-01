@@ -37,7 +37,7 @@ fun buildDialogList(): List<ExampleDialog> = transaction {
                     text = ExampleTextWithAudio(
                         native = wordText,
                         foreign = getTranslation("NL", wordText),
-                        audioUrl = "http://167.99.215.169/media/voice/NL/${toHash(wordText)}"
+                        audioUrl = "https://eentweespreek.nl/media/voice/NL/${toHash(wordText)}"
                     )
                 )
             }
@@ -82,7 +82,7 @@ fun buildDialogList(): List<ExampleDialog> = transaction {
                             variableId = s.variableId,
                             native = s.sentenceText,
                             foreign = getTranslation("NL", s.sentenceText),
-                            audioUrl = "http://167.99.215.169/media/voice/NL/${toHash(s.sentenceText)}"
+                            audioUrl = "https://eentweespreek.nl/media/voice/NL/${toHash(s.sentenceText)}"
                         )
                     }
                 )
