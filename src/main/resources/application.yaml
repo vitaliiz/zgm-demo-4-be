@@ -1,12 +1,6 @@
 ktor:
   deployment:
-    sslPort: 443
-  security:
-    ssl:
-      keyStore: keystore.jks
-      keyAlias: sampleAlias
-      keyStorePassword: passpass
-      privateKeyPassword: passpass
+    port: 8080
   application:
     modules:
       - com.example.AppConfigKt.configureHttp
