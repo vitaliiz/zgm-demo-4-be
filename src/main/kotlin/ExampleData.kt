@@ -85,3 +85,9 @@ data class ExampleSentenceText(
     val foreign: String,
     val audioUrl: String
 )
+
+@Serializable
+data class PracticeReadyRequest(
+    val userId: String,
+    val dialogId: String
+)

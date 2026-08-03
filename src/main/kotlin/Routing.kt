@@ -3,13 +3,16 @@ package com.example
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+
+private val practiceReadyUsers = ConcurrentHashMap.newKeySet<PracticeReadyRequest>()
 
 fun configureRouting(app: Application) {
     DatabaseFactory.init()
@@ -26,6 +29,12 @@ fun configureRouting(app: Application) {
             val dialogsList = buildDialogList()
             val response = ExampleData(dialogsList)
             call.respondText(Json.encodeToString(response))
+        }
+
+        post("/practice/ready") {
+            val request = call.receive<PracticeReadyRequest>()
+            practiceReadyUsers.add(request)
+            call.respond(HttpStatusCode.OK)
         }
         get("/media/voice/{lang}/{hash}") {
             val lang = call.parameters["lang"] ?: return@get call.respond(HttpStatusCode.BadRequest)
