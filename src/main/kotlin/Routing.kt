@@ -33,8 +33,19 @@ fun configureRouting(app: Application) {
 
         post("/practice/ready") {
             val request = call.receive<PracticeReadyRequest>()
-            practiceReadyUsers.add(request)
-            call.respond(HttpStatusCode.OK)
+            
+            // Look for another user who wants to practice the same dialog
+            val match = practiceReadyUsers.find { it.dialogId == request.dialogId && it.userId != request.userId }
+            
+            if (match != null) {
+                // Match found: consume the match so they don't match with a third person
+                practiceReadyUsers.remove(match)
+                call.respond(PracticeReadyResponse(matchFound = true))
+            } else {
+                // No match found: add to the waitlist
+                practiceReadyUsers.add(request)
+                call.respond(PracticeReadyResponse(matchFound = false))
+            }
         }
         get("/media/voice/{lang}/{hash}") {
             val lang = call.parameters["lang"] ?: return@get call.respond(HttpStatusCode.BadRequest)
