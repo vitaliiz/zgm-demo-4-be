@@ -94,5 +94,6 @@ data class PracticeReadyRequest(
 
 @Serializable
 data class PracticeReadyResponse(
-    val matchFound: Boolean
+    val matchFound: Boolean,
+    val dialogId: String
 )

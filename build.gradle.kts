@@ -29,6 +29,7 @@ dependencies {
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.cors)
     implementation(ktorLibs.server.netty)
+    implementation(ktorLibs.server.websockets)
     implementation(libs.logback.classic)
 
     implementation("io.ktor:ktor-client-core:$ktor_version")

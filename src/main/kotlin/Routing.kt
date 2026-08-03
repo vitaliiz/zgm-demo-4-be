@@ -6,13 +6,18 @@ import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 private val practiceReadyUsers = ConcurrentHashMap.newKeySet<PracticeReadyRequest>()
+private val userSessions = ConcurrentHashMap<String, WebSocketServerSession>()
 
 fun configureRouting(app: Application) {
     DatabaseFactory.init()
@@ -25,6 +30,18 @@ fun configureRouting(app: Application) {
         }
         staticFiles("/assets", File("spa/assets"))
 
+        webSocket("/ws/{userId}") {
+            val userId = call.parameters["userId"] ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Missing userId"))
+            userSessions[userId] = this
+            try {
+                for (frame in incoming) {
+                    // Handle incoming messages if needed
+                }
+            } finally {
+                userSessions.remove(userId)
+            }
+        }
+
         get("/dialogs") {
             val dialogsList = buildDialogList()
             val response = ExampleData(dialogsList)
@@ -33,20 +50,29 @@ fun configureRouting(app: Application) {
 
         post("/practice/ready") {
             val request = call.receive<PracticeReadyRequest>()
-            
+
             // Look for another user who wants to practice the same dialog
             val match = practiceReadyUsers.find { it.dialogId == request.dialogId && it.userId != request.userId }
-            
+
             if (match != null) {
                 // Match found: consume the match so they don't match with a third person
                 practiceReadyUsers.remove(match)
-                call.respond(PracticeReadyResponse(matchFound = true))
+
+                // Notify the partner who was already waiting
+                val partnerSession = userSessions[match.userId]
+                if (partnerSession != null) {
+                    val partnerResponse = PracticeReadyResponse(matchFound = true, dialogId = match.dialogId)
+                    partnerSession.send(Frame.Text(Json.encodeToString(partnerResponse)))
+                }
+
+                call.respond(PracticeReadyResponse(matchFound = true, dialogId = match.dialogId))
             } else {
                 // No match found: add to the waitlist
                 practiceReadyUsers.add(request)
-                call.respond(PracticeReadyResponse(matchFound = false))
+                call.respond(PracticeReadyResponse(matchFound = false, dialogId = ""))
             }
         }
+
         get("/media/voice/{lang}/{hash}") {
             val lang = call.parameters["lang"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val hash = call.parameters["hash"] ?: return@get call.respond(HttpStatusCode.BadRequest)
