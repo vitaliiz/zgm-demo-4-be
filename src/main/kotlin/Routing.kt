@@ -13,11 +13,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import io.ktor.http.content.*
+import io.ktor.utils.io.*
 
 private val practiceReadyUsers = ConcurrentHashMap.newKeySet<PracticeReadyRequest>()
 private val userSessions = ConcurrentHashMap<String, WebSocketServerSession>()
+private val activeDialogs = ConcurrentHashMap<String, String>()
 
 fun configureRouting(app: Application) {
     DatabaseFactory.init()
@@ -39,6 +41,10 @@ fun configureRouting(app: Application) {
                 }
             } finally {
                 userSessions.remove(userId)
+                val partnerId = activeDialogs.remove(userId)
+                if (partnerId != null) {
+                    activeDialogs.remove(partnerId)
+                }
             }
         }
 
@@ -58,6 +64,10 @@ fun configureRouting(app: Application) {
                 // Match found: consume the match so they don't match with a third person
                 practiceReadyUsers.remove(match)
 
+                // Record the pairing
+                activeDialogs[request.userId] = match.userId
+                activeDialogs[match.userId] = request.userId
+
                 // Notify the partner who was already waiting
                 val partnerSession = userSessions[match.userId]
                 if (partnerSession != null) {
@@ -70,6 +80,27 @@ fun configureRouting(app: Application) {
                 // No match found: add to the waitlist
                 practiceReadyUsers.add(request)
                 call.respond(PracticeReadyResponse(matchFound = false, dialogId = ""))
+            }
+        }
+
+        post("/practice/sentence") {
+            val request = call.receive<PracticeSentenceRequest>()
+            
+            val partnerId = activeDialogs[request.userId]
+            if (partnerId != null) {
+                val partnerSession = userSessions[partnerId]
+                if (partnerSession != null) {
+                    val event = PracticeSentenceEvent(
+                        userId = request.userId,
+                        audioBase64 = request.audioBase64
+                    )
+                    partnerSession.send(Frame.Text(Json.encodeToString(event)))
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Partner session not found")
+                }
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Partner not found")
             }
         }
 

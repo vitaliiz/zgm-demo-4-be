@@ -97,3 +97,15 @@ data class PracticeReadyResponse(
     val matchFound: Boolean,
     val dialogId: String
 )
+
+@Serializable
+data class PracticeSentenceRequest(
+    val userId: String,
+    val audioBase64: String
+)
+
+@Serializable
+data class PracticeSentenceEvent(
+    val userId: String,
+    val audioBase64: String
+)
